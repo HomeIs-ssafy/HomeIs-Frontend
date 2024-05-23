@@ -6,11 +6,10 @@ import SearchBar from "@/components/map/SearchBar.vue";
 
 const lat = ref(36.3549777);
 const lng = ref(127.2983403);
-const container = ref(null);
+const map = ref();
 const beforePos = ref({ lng1: "", lat1: "", lng2: "", lat2: "" });
 const receivedDongCodeList = ref({});
-var markers = [];
-var clusterer = null;
+
 const afterMoveUpdateMarker = async (lng1, lat1, lng2, lat2) => {
   const { data } = await axios.get(
     "http://localhost/homeis/map/dongCodes/" +
@@ -37,27 +36,6 @@ const timer = (lng1, lat1, lng2, lat2) => {
     }
   }, 500);
 };
-
-const loadScript = () => {
-  const script = document.createElement("script");
-  script.src =
-    "//dapi.kakao.com/v2/maps/sdk.js?appkey=e4e091435b2102c8e28e00b113bcbf06&autoload=false&libraries=clusterer";
-  script.onload = () => window.kakao.maps.load(loadMap);
-  document.head.appendChild(script);
-};
-
-const loadMap = () => {
-  const options = {
-    center: new window.kakao.maps.LatLng(lat.value, lng.value),
-    level: 4,
-  };
-  map.value = new window.kakao.maps.Map(container.value, options);
-};
-
-onMounted(() => {
-  if (window.kakao && window.kakao.maps) loadMap();
-  else loadScript();
-});
 
 const onLoadKakaoMap = (mapRef) => {
   map.value = mapRef;
@@ -92,20 +70,9 @@ const onLoadKakaoMap = (mapRef) => {
     timer(lng1, lat1, lng2, lat2);
   });
 };
+
 const dongCodeListHandler = (dongCodeList) => {
   receivedDongCodeList.value = dongCodeList;
-
-  for (var i = 0; i < receivedDongCodeList.value.length; i++) {
-    const lat = receivedDongCodeList.value[i].lat;
-    const lng = receivedDongCodeList.value[i].lng;
-    console.log(lat);
-    var marker = new kakao.maps.Marker({
-      position: new window.kakao.maps.LatLng(lat, lng),
-    });
-    marker.setMap(map.value);
-    markers.push(new window.kakao.maps.LatLng(lat, lng));
-  }
-  clusterer.addMarkers(markers);
   moveMap();
 };
 
@@ -125,21 +92,20 @@ const moveMap = () => {
 
 const emit = defineEmits(["sendAptCode"]);
 const visibleRef = ref(false);
-
 const onClickKakaoMapMarker = (aptCode) => {
   emit("sendAptCode", aptCode);
 };
 </script>
 
 <template>
-  <!-- <KakaoMap
+  <KakaoMap
     :lat="lat"
     :lng="lng"
     @onLoadKakaoMap="onLoadKakaoMap"
     width="100%"
     height="100%"
   >
-    <!-- <KakaoMapMarker
+    <KakaoMapMarker
       v-for="apartInfo in receivedDongCodeList"
       :key="apartInfo.aptCode"
       :lat="apartInfo.lat"
@@ -152,15 +118,9 @@ const onClickKakaoMapMarker = (aptCode) => {
       }"
       :clickable="true"
       @onClickKakaoMapMarker="onClickKakaoMapMarker(apartInfo.aptCode)"
-    /> 
-  </KakaoMap> -->
-  <div id="map" ref="container"></div>
+    />
+  </KakaoMap>
   <SearchBar @send-dong-code-list="dongCodeListHandler" />
 </template>
 
-<style scoped>
-#map {
-  width: 500px;
-  height: 500px;
-}
-</style>
+<style scoped></style>
